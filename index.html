@@ -30,7 +30,7 @@
     <div class="container">
         <div class="editor" id="editor"></div>
         <div class="output">
-            <button onclick="runCode()">Run</button>
+            <button onclick="runCode()" id="runButton" disabled="true">Run</button>
             <h3>
                 Output:
             </h3>
@@ -661,6 +661,8 @@
             await myRuntime.runModule("World", "World.wasm")
             await myRuntime.runModule("Builtins", "Builtins.wasm")
             await myRuntime.runModule("Expr", "Expr.wasm")
+
+            document.getElementById("runButton").disabled = false
         }
 
         function runCode() {
