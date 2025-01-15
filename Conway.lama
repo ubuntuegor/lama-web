@@ -1,0 +1,74 @@
+import Array;
+
+public emptyArray = [];
+external fun clearBg();
+external fun drawGridAt(x, y);
+
+var w = 40, h = 40;
+var grid;
+
+fun createGrid() {
+    initArray(h, fun (y) {
+        initArray(w, fun (x) { Dead })
+    })
+}
+
+fun initGrid() {
+    grid := createGrid();
+    grid[20][21] := Alive;
+    grid[21][20] := Alive;
+    grid[21][21] := Alive;
+    grid[22][21] := Alive;
+    grid[22][22] := Alive
+}
+
+fun drawGrid() {
+    clearBg();
+    iteriArray(fun (y, row) {
+        iteriArray(fun (x, state) {
+            case state of
+                Alive -> drawGridAt(x, y)
+              | Dead -> skip
+            esac
+        }, row)
+    }, grid)
+}
+
+fun countNeighbors(x, y) {
+    var result = 0, i, j;
+    for i := x - 1, i <= x + 1, i := i + 1 do
+        for j := y - 1, j <= y + 1, j := j + 1 do
+            if j >= 0 && j < h && i >= 0 && i < w && (x != i !! y != j) then
+                case grid[j][i] of
+                    Alive -> result := result + 1
+                  | Dead -> skip
+                esac
+            fi
+        od
+    od;
+    result
+}
+
+fun updateGrid() {
+    var newGrid = createGrid(), i, j;
+    for i := 0, i < w, i := i + 1 do
+        for j := 0, j < h, j := j + 1 do
+            newGrid[j][i] := case [grid[j][i], countNeighbors(i, j)] of
+                [Alive, 2] -> Alive
+              | [Alive, 3] -> Alive
+              | [Alive, _] -> Dead
+              | [Dead, 3] -> Alive
+              | [Dead, _] -> Dead
+            esac
+        od
+    od;
+    grid := newGrid
+}
+
+public fun nextStep() {
+    updateGrid();
+    drawGrid()
+}
+
+initGrid();
+drawGrid()

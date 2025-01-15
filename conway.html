@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game of Lama</title>
+</head>
+
+<body>
+    <canvas width="800" height="800" id="canva" style="border: solid 1px grey"></canvas>
+
+    <pre id="source" style="margin-top: 20px"></pre>
+    <script src="lib.js"></script>
+    <script>
+        const canvas = document.getElementById("canva")
+        const ctx = canvas.getContext("2d")
+        const myRuntime = new LamaRuntime(".")
+
+        async function myMain() {
+            const extern = {
+                "clearBg": (_) => {
+                    ctx.clearRect(0, 0, 800, 800)
+                },
+                "drawGridAt": (_, x, y) => {
+                    ctx.fillRect(x * 20, y * 20, 20, 20)
+                }
+            }
+            await myRuntime.initialize(extern)
+
+            const module = await myRuntime.runModule("Conway", "Conway.wasm")
+            const emptyArray = module.emptyArray.value
+
+            setInterval(() => {
+                module.nextStep(emptyArray)
+            }, 500)
+
+            const source = await fetch("Conway.lama")
+            const rawSource = await source.text()
+
+            document.getElementById("source").innerText = rawSource
+        }
+
+        myMain()
+    </script>
+</body>
+
+</html>
