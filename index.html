@@ -587,7 +587,7 @@
             const scope = 'source.lama'
 
             const onigWasmBlob = await fetch('https://cdn.jsdelivr.net/npm/vscode-oniguruma@2.0.1/release/onig.wasm')
-            onig.loadWASM(onigWasmBlob)
+            await onig.loadWASM(onigWasmBlob)
             const onigLib = Promise.resolve({
                 createOnigScanner: onig.createOnigScanner,
                 createOnigString: onig.createOnigString
@@ -632,8 +632,24 @@
                 monaco.languages.setLanguageConfiguration(languageId, configuration)
             })
 
+            const inputCode = `fun m (l) {
+  case l of
+    {}         -> write (0)
+  | x : {}     -> write (x)
+  | x : y : {} -> write (x); write (y)
+  | x : tl     -> write (x); m (tl)
+  esac
+}
+
+m ({});
+m (1 : {});
+m (1 : 2 : {});
+m (1 : 2 : 3 : {});
+m (1 : 2 : 3 : 4 : {})
+`
+
             vsEditor = monaco.editor.create(document.getElementById('editor'), {
-                value: 'write(2 + 2)\n',
+                value: inputCode,
                 language: languageId,
                 theme: 'vs-dark'
             })

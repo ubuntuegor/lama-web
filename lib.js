@@ -1,6 +1,6 @@
 function createReader() {
     return () => {
-        return parseInt(prompt("input number"))
+        return prompt("Input number to be passed to read() call, press Cancel when done")
     }
 }
 
@@ -30,7 +30,7 @@ class LamaRuntime {
     lastAddress = 0
     addressSpace = new Map()
     regexps = []
-    readNum = createReader()
+    readLine = createReader()
     puts = createWriter()
     loadModule = createLoader()
 
@@ -47,7 +47,11 @@ class LamaRuntime {
                     return 0
                 },
                 "read": (_) => {
-                    return this.readNum()
+                    return parseInt(this.readLine())
+                },
+                "readLine": (_) => {
+                    const line = this.readLine()
+                    return line == null ? 0 : this.internalizeString(line)
                 },
                 "printf": (_, args) => {
                     args = this.externalizeArray(args)
@@ -157,7 +161,7 @@ class LamaRuntime {
                     if (start < 0 || start > string.length) return -1
                     const regexp = this.regexps[pointer]
                     const result = regexp.exec(string.slice(start))
-                    return result ? result[0].length : -1
+                    return (result && result.index == 0) ? result[0].length : -1
                 },
                 "matchSubString": (_, subj, patt, pos) => {
                     subj = this.externalizeString(subj)
