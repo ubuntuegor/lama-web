@@ -215,6 +215,7 @@ class LamaRuntime {
         const module = await this.loadModule(path, this.runtime)
         module.instance.exports.main()
         this.runtime[name] = module.instance.exports
+        return module.instance.exports
     }
 
     async loadLib(name) {
