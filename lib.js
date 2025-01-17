@@ -1,6 +1,7 @@
 function createReader() {
     return () => {
-        return prompt("Input number to be passed to read() call, press Cancel when done")
+        // return prompt("Input number to be passed to read() call, press Cancel when done")
+        return null
     }
 }
 
@@ -214,7 +215,6 @@ class LamaRuntime {
         const module = await this.loadModule(path, this.runtime)
         module.instance.exports.main()
         this.runtime[name] = module.instance.exports
-        return module.instance.exports
     }
 
     async loadLib(name) {

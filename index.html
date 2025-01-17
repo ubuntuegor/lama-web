@@ -9,6 +9,7 @@
         .container {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: min-content max-content;
             gap: 20px;
             max-width: 1200px;
             margin: 20px auto;
@@ -16,17 +17,29 @@
 
             border-radius: 10px;
             border: solid 1px grey;
-            min-height: 600px;
         }
 
         pre {
             white-space: pre-wrap;
+        }
+
+        #snippetsBar {
+            grid-column: span 2;
+        }
+
+        #snippetsBar button {
+            margin: 0px 5px;
+        }
+
+        #editor {
+            height: 800px;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
+        <div id="snippetsBar"></div>
         <div class="editor" id="editor"></div>
         <div class="output">
             <button onclick="runCode()" id="runButton" disabled="true">Run</button>
@@ -572,6 +585,61 @@
             ],
         }
 
+        const snippets = [
+            `fun get_numbers() {
+    [1, 3, 3, 7]
+}
+
+var i = 0, sum = 0, numbers = get_numbers();
+
+for i := 0, i < numbers.length, i := i + 1
+do
+    sum := sum + numbers[i]
+od;
+
+write(sum)
+`, `fun filterList(list, f) {
+  case list of
+    Cons (x, xs) ->
+      if f(x)
+      then Cons (x, filterList(xs, f))
+      else filterList(xs, f)
+      fi
+  | Nil -> Nil
+  esac
+}
+
+fun writeList (list) {
+  case list of
+    Cons (x, xs) -> write(x); writeList(xs)
+  | Nil -> skip
+  esac
+}
+
+var myList = Cons(1, Cons(2, Cons(3, Cons(4, Nil))));
+var myFilteredList = filterList(
+  myList, fun (x) { x % 2 == 0 }
+);
+
+writeList(myFilteredList)
+`, `fun counter() {
+  var i = 0;
+
+  fun () {
+    i := i + 1
+  }
+}
+
+var c = counter();
+write(c());
+write(c());
+write(c());
+write(c())
+
+-- actually this works incorrectly
+`
+]
+
         require.config({
             paths: {
                 vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs',
@@ -581,6 +649,15 @@
         })
 
         let vsEditor
+
+        snippets.forEach((snippet, i) => {
+            const button = document.createElement("button")
+            button.innerText = `Load snippet #${i + 1}`
+            button.onclick = () => {
+                vsEditor.setValue(snippet)
+            }
+            document.getElementById("snippetsBar").appendChild(button)
+        })
 
         require(['vs/editor/editor.main', 'vscode-oniguruma/main.min', 'vscode-textmate/main.min'], async function (monaco, onig, tm) {
             const languageId = 'lama'
@@ -632,30 +709,16 @@
                 monaco.languages.setLanguageConfiguration(languageId, configuration)
             })
 
-            const inputCode = `fun m (l) {
-  case l of
-    {}         -> write (0)
-  | x : {}     -> write (x)
-  | x : y : {} -> write (x); write (y)
-  | x : tl     -> write (x); m (tl)
-  esac
-}
-
-m ({});
-m (1 : {});
-m (1 : 2 : {});
-m (1 : 2 : 3 : {});
-m (1 : 2 : 3 : 4 : {})
-`
-
             vsEditor = monaco.editor.create(document.getElementById('editor'), {
-                value: inputCode,
+                value: snippets[0],
                 language: languageId,
-                theme: 'vs-dark'
+                theme: 'vs-dark',
+                automaticLayout: true
             })
         })
 
         const myRuntime = new LamaRuntime(".")
+        let driver
 
         async function myMain() {
             const extern = {
@@ -676,15 +739,19 @@ m (1 : 2 : 3 : 4 : {})
             await myRuntime.runModule("World", "World.wasm")
             await myRuntime.runModule("Builtins", "Builtins.wasm")
             await myRuntime.runModule("Expr", "Expr.wasm")
+            driver = await myRuntime.loadModule("Driver.wasm", myRuntime.runtime)
 
             document.getElementById("runButton").disabled = false
         }
 
         function runCode() {
             document.getElementById("output").innerText = ""
-            myRuntime.runModule("Driver", "Driver.wasm").catch((e) => {
+            try {
+                driver.instance.exports.main()
+            } catch (e) {
                 document.getElementById("output").innerText = e
-            })
+                console.error(e)
+            }
         }
 
         myMain()
